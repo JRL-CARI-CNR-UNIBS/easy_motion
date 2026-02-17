@@ -1,9 +1,13 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.16)
 project(easy_motion_behavior_tree)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -28,8 +32,6 @@ set(dependencies
   tf2_ros
   tf2
 )
-
-include_directories(include)
 
 add_executable(bt_executer_node
     src/bt_executer_node.cpp
@@ -76,9 +78,13 @@ list(APPEND plugin_libs can_transform)
 
 foreach(bt_plugin ${plugin_libs})
   # target_link_libraries(${bt_plugin} ${dependencies})
-  ament_target_dependencies(${bt_plugin} ${dependencies})
+  ament_target_dependencies(${bt_plugin} PUBLIC ${dependencies})
   target_compile_definitions(${bt_plugin} PRIVATE BT_PLUGIN_EXPORT)
-
+  target_include_directories(
+    ${bt_plugin} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
 endforeach()
 
 install(DIRECTORY launch config trees DESTINATION share/${PROJECT_NAME})
@@ -86,6 +92,7 @@ install(DIRECTORY launch config trees DESTINATION share/${PROJECT_NAME})
 install(TARGETS
   bt_executer_node
   ${plugin_libs}
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
@@ -101,7 +108,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_export_libraries(${PROJECT_NAME})
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(${dependencies})
 
 ament_package()

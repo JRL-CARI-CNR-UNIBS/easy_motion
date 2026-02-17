@@ -1,7 +1,6 @@
 #include <easy_motion_behavior_tree/leaves/move_to_joint.hpp>
+#include <easy_motion_behavior_tree/moveit_error_to_string.hpp>
 #include <moveit_msgs/msg/move_it_error_codes.hpp>
-#include <moveit/utils/moveit_error_code.h>
-
 
 MoveToJoint::MoveToJoint(
   const std::string & name,
@@ -34,7 +33,7 @@ BT::NodeStatus MoveToJoint::onResultReceived(const RosActionNode::WrappedResult 
     moveit::core::MoveItErrorCode error(code);  // wrap
     RCLCPP_INFO(
       node_.lock()->get_logger(), "%s failed with error code: %d (%s)",
-      name().c_str(), code, moveit::core::error_code_to_string(error).c_str());
+      name().c_str(), code, easy_motion::moveitErrorToString(error).c_str());
     return BT::NodeStatus::FAILURE;
   }
 
